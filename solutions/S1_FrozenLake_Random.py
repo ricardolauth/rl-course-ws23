@@ -9,8 +9,6 @@ print("## Frozen Lake ##")
 
 action2string = {0: "Left", 1: "Down", 2: "Right", 3: "Up"}
 
-
-
 def play_episode(env, policy=None):
     state = env.reset(seed=0)[0]
     done = False
@@ -21,7 +19,6 @@ def play_episode(env, policy=None):
         if policy is None:
             action = random.randint(0, 3)
         else:
-            print(state)
             action = policy[state]
 
         actions.append(action)
