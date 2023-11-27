@@ -1,5 +1,6 @@
 import gymnasium as gym
 import random
+from rich.console import Console
 
 env = gym.make("FrozenLake-v1", is_slippery=True, render_mode="ansi")
 discount = 1
@@ -22,6 +23,10 @@ for p, s_next, reward, _ in tp_matrix[state][action]:
 	print("Probability", p)
 	print("Next state", s_next)
 	print("Reward", reward)
+
+# here you can see the whole matrix in pretty print
+c = Console()
+c.print(env.unwrapped.P)
 
 # your solution comes here
 
