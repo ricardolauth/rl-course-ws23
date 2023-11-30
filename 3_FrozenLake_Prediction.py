@@ -2,38 +2,45 @@ import random
 import gymnasium as gym
 import numpy as np
 
-env = gym.make("FrozenLake-v1", render_mode="ansi")
+env = gym.make("FrozenLake-v1")
 random.seed(0)
 np.random.seed(0)
 
 print("## Frozen Lake ##")
-print("Start state:")
-state = env.reset(seed=0)
-print(env.render())
 
+no_states = env.observation_space.n
+no_actions = env.action_space.n
 
-def play_episode():
-    state = env.reset()
+q_values = np.random.rand(no_states, no_actions)
+
+def play_episode(policy=None):
+    state = env.reset()[0]
     done = False
     r_s = []
     while not done:
-        action = random.randint(0, 3)
+        if policy is None:
+            action = random.randint(0, 3)
+        else:
+            action = np.argmax(policy[state]) # choose greedy
+
+        prev_state = state
         state, reward, done, _, _ = env.step(action)
+        q_values[prev_state][action] += 0.01 * (reward + np.max(q_values[state]) - q_values[prev_state][action])
         r_s.append(reward)
     return r_s
 
-
 def main():
-    successful_episodes = 100
+    successful_episodes = 1000
     while successful_episodes > 0:
-        rewards = play_episode()
-
-        # Task 1: update Q-values using MC
-
-        if sum(rewards) > 0:
-            # Task 1: print Q-values using MC
-            # Task 2: play 100 episodes using current Q-values and greedy policy
+        success = play_episode()
+        if(sum(success) > 0):
             successful_episodes -= 1
+            
 
-
+    all_rewards = 0
+    for i in range(0, 100):
+        rewards = play_episode(q_values)
+        all_rewards += sum(rewards)
+    print(q_values)
+    print(all_rewards / 100)
 main()
