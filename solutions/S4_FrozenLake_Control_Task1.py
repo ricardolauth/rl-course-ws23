@@ -11,29 +11,21 @@ print("## Frozen Lake ##")
 
 no_states = env.observation_space.n
 no_actions = env.action_space.n
-actions = range(0, env.unwrapped.action_space.n)
-q_values = np.zeros((no_states, no_actions))
-q_counter = np.zeros((no_states, no_actions))
-alpha = 0.5
 
 
 def play_episode(q_values, epsilon):
 
     state, _ = env.reset(seed=0)
     done = False
-
     r_s = []
+    s_a = []
     while not done:
-        next_state, reward, done, _, _ = env.step(action)
-        next_action = choose_action(q_values, next_state, epsilon)
+        action = choose_action(q_values, state, epsilon)
 
-        q_values[state, action] += alpha*(reward + np.max(q_values[next_state]) - q_values[state, action])
-        state = next_state
-        action = next_action
-
+        s_a.append((state, action))
+        state, reward, done, _, _ = env.step(action)
         r_s.append(reward)
-
-    return r_s
+    return s_a, r_s
 
 
 def choose_action(q_values, state, epsilon):
@@ -48,14 +40,6 @@ def choose_action(q_values, state, epsilon):
 
 
 def main():
-    # learn q values
-    # successful_episodes = 1000
-    # while successful_episodes > 0:
-    #     r_s = learn_q_table()
-    #     if sum(r_s) > 0:
-    #         successful_episodes -= 1
-
-
     no_episodes = 1000
     epsilons = [0.01, 0.1, 0.5, 1.0]
 
@@ -63,15 +47,21 @@ def main():
     for e in epsilons:
 
         q_values = np.zeros((no_states, no_actions))
+        q_counter = np.zeros((no_states, no_actions))
 
         rewards = []
         for j in range(0, no_episodes):
-            r = play_episode(q_values, epsilon=e)
+            s_a, r = play_episode(q_values, epsilon=e)
             rewards.append(sum(r))
+
+            # update q-values with MC-prediction
+            for i, (s, a) in enumerate(s_a):
+                return_i = sum(r[i:])
+                q_counter[s][a] += 1
+                q_values[s][a] += 1/q_counter[s][a] * (return_i - q_values[s][a])
 
         plot_data.append(np.cumsum(rewards))
 
-    # plot the rewards
     plt.figure()
     plt.xlabel("No. of episodes")
     plt.ylabel("Total reward")
