@@ -17,7 +17,7 @@ q_counter = np.zeros((no_states, no_actions))
 
 def play_episode(q_values):
 
-    state = env.reset(seed=0)
+    state, _ = env.reset(seed=0)
     done = False
     r_s = []
     s_a = []
