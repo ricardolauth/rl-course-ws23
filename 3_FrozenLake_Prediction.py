@@ -12,6 +12,8 @@ no_states = env.observation_space.n
 no_actions = env.action_space.n
 
 q_values = np.random.rand(no_states, no_actions)
+alpha = 0.01
+epsilon = 0.4
 
 def play_episode(policy=None):
     state = env.reset()[0]
@@ -21,12 +23,42 @@ def play_episode(policy=None):
         if policy is None:
             action = random.randint(0, 3)
         else:
-            action = np.argmax(policy[state]) # choose greedy
+            winners = np.flatnonzero(policy[state] == np.max(policy[state]))
+            actions = []
+            for a in no_actions:
+                if a in winners:
+                    val = (epsilon / no_actions) + (1 - epsilon) / len(winners)
+                    actions.append(val)
+                else:
+                    actions.append(epsilon / no_actions)
+
+
 
         prev_state = state
         state, reward, done, _, _ = env.step(action)
         q_values[prev_state][action] += 0.01 * (reward + np.max(q_values[state]) - q_values[prev_state][action])
         r_s.append(reward)
+    return r_s
+
+def learn_q_table():
+
+    state = env.reset()[0]
+    action = random.randint(0, 3)
+    done = False
+
+    r_s = []
+
+    while not done:
+
+        next_state, reward, done, _, _ = env.step(action)
+        next_action = random.randint(0, 3)
+
+        q_values[state, action] += alpha*(reward + q_values[next_state, next_action] - q_values[state, action])
+        state = next_state
+        action = next_action
+
+        r_s.append(reward)
+
     return r_s
 
 def main():
