@@ -13,13 +13,12 @@ The recommended way to setup your development environment is to use Anaconda:
 
 4. Install the following packages with conda. Execute:
 
-`conda install numpy pandas matplotlib scikit-learn jupyter`
+`conda install numpy pandas matplotlib scikit-learn jupyter seaborn gymnasium`
 
-5. Install the `gymnasium` package with pip. Execute:
-
-`pip install gymnasium`
-
-6. Test your setup by running:
+5. Test your setup by running:
 
 `python3 1_FrozenLake_Random.py`
+
+This will work for the first few weeks. Later on we will need `PyTorch`, which you can download here: https://pytorch.org/
+
 
