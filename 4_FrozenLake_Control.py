@@ -15,32 +15,20 @@ actions = range(0, env.unwrapped.action_space.n)
 q_values = np.zeros((no_states, no_actions))
 q_counter = np.zeros((no_states, no_actions))
 alpha = 0.5
-epsilon = 0.1
 
-def play_episode_prediction(q_values):
-    state = env.reset()[0]
-    done = False
-    r_s = []
-    while not done:
-        action = np.argmax(q_values[state])
-        state, reward, done, _, _ = env.step(action)
-        r_s.append(reward)
-    return r_s
 
-def learn_q_table():
+def play_episode(q_values, epsilon):
 
-    state = env.reset()[0]
-    action = random.randint(0, 3)
+    state, _ = env.reset(seed=0)
+    action = choose_action(q_values, state, epsilon)
     done = False
 
     r_s = []
-
     while not done:
-
         next_state, reward, done, _, _ = env.step(action)
-        next_action = random.randint(0, 3)
+        next_action = choose_action(q_values, next_state, epsilon)
 
-        q_values[state, action] += alpha*(reward + q_values[next_state, next_action] - q_values[state, action])
+        q_values[state, action] += alpha*(reward + np.max(q_values[next_state]) - q_values[state, action])
         state = next_state
         action = next_action
 
@@ -49,32 +37,15 @@ def learn_q_table():
     return r_s
 
 
-def play_episode(policy=None):
-    state = env.reset()[0]
-    done = False
-    r_s = []
-    while not done:
-        if policy is None:
-            action = random.randint(0, 3)
-        else:
-            winners = np.flatnonzero(policy[state] == np.max(policy[state]))
-            probility = []
-            for a in actions:
-                if a in winners:
-                    val = (epsilon / no_actions) + (1 - epsilon) / len(winners)
-                    probility.append(val)
-                else:
-                    probility.append(epsilon / no_actions)
-            
-            action = np.random.choice(no_actions, 1, p=probility)[0]
-
-        prev_state = state
-        state, reward, done, _, _ = env.step(action)
-        if policy is not None:
-            q_values[prev_state][action] += alpha * (reward + np.max(q_values[state]) - q_values[prev_state][action])
-        r_s.append(reward)
-    return r_s
-
+def choose_action(q_values, state, epsilon):
+    if random.random() > epsilon:
+        # note: there can be more than one best action, e.g. [0, 0, 0, 0]
+        # problem: np.argmax(q_values[state]) will always return the first max element
+        # better: find all max elements and select one randomly
+        max_indices = [i for i, v in enumerate(q_values[state]) if v == max(q_values[state])]
+        return random.choice(max_indices)
+    else:
+        return random.randint(0, 3)
 
 
 def main():
@@ -87,30 +58,26 @@ def main():
 
 
     no_episodes = 1000
-    rewards_random = []
-    for i in range(0, no_episodes):
-        r = play_episode()
-        rewards_random.append(sum(r))
+    epsilons = [0.01, 0.1, 0.5, 1.0]
 
-        # TODO: update q-values with MC-prediction
+    plot_data = []
+    for e in epsilons:
 
-    plot_data_rand = np.cumsum(rewards_random)
+        q_values = np.zeros((no_states, no_actions))
 
-    rewards = []
-    for i in range(0, no_episodes):
-        r = play_episode(q_values)
-        rewards.append(sum(r))
+        rewards = []
+        for j in range(0, no_episodes):
+            r = play_episode(q_values, epsilon=e)
+            rewards.append(sum(r))
 
-        # TODO: update q-values with MC-prediction
-
-    plot_data = np.cumsum(rewards)
+        plot_data.append(np.cumsum(rewards))
 
     # plot the rewards
     plt.figure()
     plt.xlabel("No. of episodes")
-    plt.ylabel("Sum of Rewards")
-    plt.plot(range(0, no_episodes), plot_data_rand, label="random")
-    plt.plot(range(0, no_episodes), plot_data, label="epsilon")
+    plt.ylabel("Total reward")
+    for i, eps in enumerate(epsilons):
+        plt.plot(range(0, no_episodes), plot_data[i], label="e=" + str(eps))
     plt.legend()
     plt.show()
 
